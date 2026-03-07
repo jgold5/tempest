@@ -1,0 +1,2 @@
+rootProject.name = "tempest-core"
+
