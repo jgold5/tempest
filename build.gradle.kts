@@ -1,28 +1,42 @@
 plugins {
-    id("java")
-    id("jacoco")
-}
-
-subprojects {
-    apply(plugin = "java")
-    apply(plugin = "jacoco")
+    java
+    jacoco
 }
 
 group = "com.github.jgold5"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
+subprojects {
+    apply(plugin = "java")
+    apply(plugin = "jacoco")
 
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation(platform(libs.junit.bom))
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+    repositories {
+        mavenCentral()
+    }
 
-tasks.test {
-    useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
+    tasks.test {
+        useJUnitPlatform()
+        finalizedBy(tasks.named("jacocoTestReport"))
+    }
 
+    tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+        violationRules {
+            rule {
+                limit {
+                    minimum = "0.00".toBigDecimal()
+                }
+            }
+        }
+    }
+
+    tasks.named("check") {
+        dependsOn(tasks.named("jacocoTestCoverageVerification"))
+    }
+
+    tasks.named<JacocoReport>("jacocoTestReport") {
+        reports {
+            xml.required = true
+            html.required = true
+        }
+    }
+}
