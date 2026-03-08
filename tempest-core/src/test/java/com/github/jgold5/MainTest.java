@@ -10,4 +10,9 @@ class MainTest {
   void mainTest() {
     assertEquals("hi", "hi");
   }
+
+  @Test
+  void secondTest() {
+    assertEquals("buzz", "buzz");
+  }
 }
