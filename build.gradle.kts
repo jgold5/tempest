@@ -10,6 +10,7 @@ version = "1.0-SNAPSHOT"
 
 sonar {
     properties {
+        property("sonar.gradle.skipCompile", "true")
         property("sonar.projectKey", "jgold5_tempest")
         property("sonar.organization", "jgold5")
         property("sonar.host.url", "https://sonarcloud.io")
