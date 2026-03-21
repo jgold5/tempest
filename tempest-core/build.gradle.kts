@@ -12,6 +12,7 @@ dependencies {
 val coveredClasses = fileTree(layout.buildDirectory.dir("classes/java/main")) {
     include(
         "com/github/jgold5/tempest/core/http/HttpRequestExecutor.class",
+        "com/github/jgold5/tempest/core/metrics/MetricsRecorder.class",
     )
 }
 
