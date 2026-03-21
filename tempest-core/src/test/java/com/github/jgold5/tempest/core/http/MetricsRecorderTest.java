@@ -4,10 +4,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.github.jgold5.tempest.core.metrics.MetricsRecorder;
 import com.github.jgold5.tempest.core.metrics.MetricsSnapshot;
+import java.util.concurrent.CountDownLatch;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.CountDownLatch;
 
 class MetricsRecorderTest {
 
@@ -59,21 +58,22 @@ class MetricsRecorderTest {
   }
 
   @Test
-    void shouldHandleConcurrentRecording() throws InterruptedException {
-      MetricsRecorder recorder = new MetricsRecorder();
-      int threadCount = 1000;
-      CountDownLatch latch = new CountDownLatch(threadCount);
+  void shouldHandleConcurrentRecording() throws InterruptedException {
+    MetricsRecorder recorder = new MetricsRecorder();
+    int threadCount = 1000;
+    CountDownLatch latch = new CountDownLatch(threadCount);
 
-      for (int i = 0; i < threadCount; i++) {
-          Thread.ofVirtual().start(() -> {
-              recorder.record(HttpRequestResult.success(200, 50));
-              latch.countDown();
-          });
-      }
-      latch.await();
-      MetricsSnapshot snapshot = recorder.getSnapshot();
-      assertThat(snapshot.getTotalCount()).isEqualTo(1000);
-      assertThat(snapshot.getErrorCount()).isZero();
-
+    for (int i = 0; i < threadCount; i++) {
+      Thread.ofVirtual()
+          .start(
+              () -> {
+                recorder.record(HttpRequestResult.success(200, 50));
+                latch.countDown();
+              });
+    }
+    latch.await();
+    MetricsSnapshot snapshot = recorder.getSnapshot();
+    assertThat(snapshot.getTotalCount()).isEqualTo(1000);
+    assertThat(snapshot.getErrorCount()).isZero();
   }
 }
