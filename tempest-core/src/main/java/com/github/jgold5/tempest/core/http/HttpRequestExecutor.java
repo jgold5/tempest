@@ -2,13 +2,24 @@ package com.github.jgold5.tempest.core.http;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import okhttp3.*;
 
 public class HttpRequestExecutor {
   private final OkHttpClient client;
 
   public HttpRequestExecutor() {
-    client = new OkHttpClient();
+    this(10, 10, 10);
+  }
+
+  public HttpRequestExecutor(
+      int connectTimeoutSeconds, int readTimeoutSeconds, int writeTimeoutSeconds) {
+    client =
+        new OkHttpClient.Builder()
+            .connectTimeout(connectTimeoutSeconds, TimeUnit.SECONDS)
+            .readTimeout(readTimeoutSeconds, TimeUnit.SECONDS)
+            .writeTimeout(writeTimeoutSeconds, TimeUnit.SECONDS)
+            .build();
   }
 
   public HttpRequestResult execute(HttpRequestConfig config) {

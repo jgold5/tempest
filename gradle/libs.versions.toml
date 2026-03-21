@@ -2,8 +2,14 @@
 junit = "5.10.0"
 okhttp = "5.3.2"
 hdrhistogram = "2.2.2"
+wiremock = "3.13.1"
+assertj = "3.27.7"
+logback = "1.5.32"
 
 [libraries]
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 hdrhistogram = { group = "org.hdrhistogram", name = "HdrHistogram", version.ref = "hdrhistogram" }
+wiremock = { group = "org.wiremock", name = "wiremock", version.ref = "wiremock" }
+assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
