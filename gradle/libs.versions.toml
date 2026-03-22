@@ -1,5 +1,5 @@
 [versions]
-junit = "5.10.0"
+junit = "6.0.3"
 okhttp = "5.3.2"
 hdrhistogram = "2.2.2"
 wiremock = "3.13.1"
