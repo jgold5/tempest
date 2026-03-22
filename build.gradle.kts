@@ -1,6 +1,6 @@
 plugins {
     id("com.diffplug.spotless") version "8.4.0"
-    id("org.sonarqube") version "4.4.1.3373"
+    id("org.sonarqube") version "7.2.3.7755"
 }
 
 group = "com.github.jgold5"
