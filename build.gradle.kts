@@ -11,8 +11,11 @@ sonar {
         property("sonar.projectKey", "jgold5_tempest")
         property("sonar.organization", "jgold5")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.jacoco.xmlReportPaths",
-            "tempest-core/build/reports/jacoco/test/jacocoTestReport.xml")
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            "tempest-core/build/reports/jacoco/test/jacocoTestReport.xml"
+        )
+        property("sonar.java.binaries", "tempest-core/build/classes/java/main")
     }
 }
 
