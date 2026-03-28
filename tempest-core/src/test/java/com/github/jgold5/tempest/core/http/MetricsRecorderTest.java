@@ -15,7 +15,7 @@ class MetricsRecorderTest {
     MetricsRecorder recorder = new MetricsRecorder();
     HttpRequestResult result = HttpRequestResult.success(200, 100L);
 
-    recorder.record(result);
+    recorder.recordResult(result);
     MetricsSnapshot snapshot = recorder.getSnapshot();
 
     assertThat(snapshot.getTotalCount()).isEqualTo(1);
@@ -29,8 +29,8 @@ class MetricsRecorderTest {
     HttpRequestResult fail1 =
         HttpRequestResult.failure(500, 5L, HttpRequestResult.ErrorType.HTTP_ERROR);
 
-    recorder.record(success1);
-    recorder.record(fail1);
+    recorder.recordResult(success1);
+    recorder.recordResult(fail1);
     MetricsSnapshot snapshot = recorder.getSnapshot();
 
     assertThat(snapshot.getTotalCount()).isEqualTo(2);
@@ -45,10 +45,10 @@ class MetricsRecorderTest {
     HttpRequestResult failure2 = HttpRequestResult.failureUnknown(900, "Test Error");
     HttpRequestResult success2 = HttpRequestResult.success(200, 50);
 
-    recorder.record(success1);
-    recorder.record(failure1);
-    recorder.record(failure2);
-    recorder.record(success2);
+    recorder.recordResult(success1);
+    recorder.recordResult(failure1);
+    recorder.recordResult(failure2);
+    recorder.recordResult(success2);
     MetricsSnapshot snapshot = recorder.getSnapshot();
 
     assertThat(snapshot.getTotalCount()).isEqualTo(4);
@@ -67,7 +67,7 @@ class MetricsRecorderTest {
       Thread.ofVirtual()
           .start(
               () -> {
-                recorder.record(HttpRequestResult.success(200, 50));
+                recorder.recordResult(HttpRequestResult.success(200, 50));
                 latch.countDown();
               });
     }
