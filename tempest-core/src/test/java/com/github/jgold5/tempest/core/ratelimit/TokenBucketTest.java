@@ -9,14 +9,8 @@ import org.junit.jupiter.api.Test;
 public class TokenBucketTest {
 
   @Test
-  void shouldRateLimitAfterBucketExhausted() throws InterruptedException {
+  void shouldBlockUntilTokenAvailable() throws InterruptedException {
     TokenBucket tokenBucket = new TokenBucket(5, 1);
-    for (int i = 0; i < 5; i++) {
-      long start = System.nanoTime();
-      tokenBucket.acquire();
-      long end = System.nanoTime();
-      assertThat(end - start).isLessThan(Duration.ofMillis(50).toNanos());
-    }
     long start = System.nanoTime();
     tokenBucket.acquire();
     long end = System.nanoTime();

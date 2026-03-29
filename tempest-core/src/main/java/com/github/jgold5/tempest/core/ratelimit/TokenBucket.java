@@ -29,14 +29,16 @@ public class TokenBucket {
   private long lastRefillTime;
 
   /**
-   * Creates a new {@code TokenBucket}.
+   * Creates a new {@code TokenBucket}. The bucket starts empty so requests are rate-limited from
+   * the first call, rather than firing an initial burst of up to {@code maxTokens} requests
+   * immediately.
    *
-   * @param maxTokens the bucket capacity; also the maximum burst size. Must be positive.
+   * @param maxTokens the bucket capacity. Must be positive.
    * @param targetRps the target throughput in requests per second. Must be positive
    */
   public TokenBucket(double maxTokens, double targetRps) {
     this.maxTokens = maxTokens;
-    this.currentTokens = maxTokens;
+    this.currentTokens = 0;
     this.refillRatePerNano = targetRps / 1_000_000_000;
     this.lastRefillTime = System.nanoTime();
   }
@@ -47,8 +49,6 @@ public class TokenBucket {
    * <p>On each invocation the bucket is refilled based on elapsed wall-clock time since the last
    * refill. If the bucket still holds fewer than one token after refill, the thread waits up to 1
    * ms and retries until a token is available.
-   *
-   * <p>The bucket is started full, so the first {@code maxTokens} calls return immediately.
    *
    * @throws InterruptedException if the calling thread is interrupted while waiting
    */
