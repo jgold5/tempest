@@ -5,6 +5,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.HdrHistogram.Recorder;
 
+/**
+ * Accumulates request results from concurrent virtual threads and produces interval {@link
+ * MetricsSnapshot snapshots} on demand.
+ *
+ * <h2>Usage</h2>
+ *
+ * <pre>{@code
+ * MetricsRecorder recorder = new MetricsRecorder();
+ * HttpRequestResult result = HttpRequestResult.success(200, 100L);
+ * recorder.recordResult(result);
+ * MetricsSnapshot snapshot = recorder.getSnapshot();
+ * }</pre>
+ */
 public class MetricsRecorder {
   private final Recorder recorder;
   private final AtomicLong totalCount;
@@ -16,14 +29,21 @@ public class MetricsRecorder {
     errorCount = new AtomicLong(0);
   }
 
-  public void record(HttpRequestResult result) {
-    recorder.recordValue(result.getResponseTimeMs());
+  /** Records the {@link HttpRequestResult result} of a single HTTP request. */
+  public void recordResult(HttpRequestResult result) {
+    recorder.recordValue(result.getResponseTimeNanos());
     if (!result.isSuccess()) {
       errorCount.incrementAndGet();
     }
     totalCount.incrementAndGet();
   }
 
+  /**
+   * Returns a snapshot of the metrics accumulated since the last call to this method, then resets
+   * the interval histogram for the next interval.
+   *
+   * @return an immutable snapshot of the current metrics
+   */
   public MetricsSnapshot getSnapshot() {
     return MetricsSnapshot.snapshot(
         totalCount.get(), errorCount.get(), recorder.getIntervalHistogram());

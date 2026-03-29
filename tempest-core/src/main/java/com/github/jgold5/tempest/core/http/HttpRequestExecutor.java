@@ -5,13 +5,37 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import okhttp3.*;
 
+/**
+ * Executes HTTP requests and produces {@link HttpRequestResult results} containing response time
+ * and status information.
+ *
+ * <p>Default timeouts are 10 seconds each for connect, read, and write. Use {@link
+ * #HttpRequestExecutor(int, int, int)} to override.
+ *
+ * <h2>Usage</h2>
+ *
+ * <pre>{@code
+ * HttpRequestExecutor executor = new HttpRequestExecutor();
+ * HttpRequestConfig config = HttpRequestConfig.get("http://localhost:8080/api", null);
+ * HttpRequestResult result = executor.execute(config);
+ * }</pre>
+ */
 public class HttpRequestExecutor {
   private final OkHttpClient client;
 
+  /** Creates a default executor. */
   public HttpRequestExecutor() {
     this(10, 10, 10);
   }
 
+  /**
+   * Creates an executor with non-default values for connect timeout, read timeout, and write
+   * timeout.
+   *
+   * @param connectTimeoutSeconds timeout for establishing a connection, in seconds
+   * @param readTimeoutSeconds timeout for reading a response, in seconds
+   * @param writeTimeoutSeconds timeout for writing a request, in seconds
+   */
   public HttpRequestExecutor(
       int connectTimeoutSeconds, int readTimeoutSeconds, int writeTimeoutSeconds) {
     client =
@@ -22,6 +46,12 @@ public class HttpRequestExecutor {
             .build();
   }
 
+  /**
+   * Executes the request based on the {@link HttpRequestConfig config}.
+   *
+   * @param config the configuration of the request
+   * @return the {@link HttpRequestResult result} of submitting the request
+   */
   public HttpRequestResult execute(HttpRequestConfig config) {
     RequestBody requestBody =
         config.getBody() == null
