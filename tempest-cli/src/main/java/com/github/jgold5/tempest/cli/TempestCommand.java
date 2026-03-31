@@ -5,6 +5,7 @@ import com.github.jgold5.tempest.core.LoadTestConfig;
 import com.github.jgold5.tempest.core.http.HttpRequestConfig;
 import com.github.jgold5.tempest.core.metrics.MetricsRecorder;
 import com.github.jgold5.tempest.core.metrics.MetricsSnapshot;
+import java.io.PrintWriter;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import org.HdrHistogram.Histogram;
@@ -28,6 +29,7 @@ import picocli.CommandLine.Parameters;
  */
 @Command(name = "tempest", description = "HTTP load testing tool")
 public class TempestCommand implements Callable<Integer> {
+  private static final PrintWriter out = new PrintWriter(System.out, true);
 
   @Option(names = "--rps", required = true)
   private int targetRps;
@@ -59,12 +61,12 @@ public class TempestCommand implements Callable<Integer> {
     long p50 = hist.getValueAtPercentile(50.0) / 1_000_000;
     long p95 = hist.getValueAtPercentile(95.0) / 1_000_000;
     long p99 = hist.getValueAtPercentile(99.0) / 1_000_000;
-    System.out.println("\nResults:");
-    System.out.printf("  Total requests   : %d%n", snapshot.getTotalCount());
-    System.out.printf("  Total errors     : %d%n", snapshot.getErrorCount());
-    System.out.printf("  p50              : %dms%n", p50);
-    System.out.printf("  p95              : %dms%n", p95);
-    System.out.printf("  p99              : %dms%n", p99);
+    out.println("\nResults:");
+    out.printf("  Total requests   : %d%n", snapshot.getTotalCount());
+    out.printf("  Total errors     : %d%n", snapshot.getErrorCount());
+    out.printf("  p50              : %dms%n", p50);
+    out.printf("  p95              : %dms%n", p95);
+    out.printf("  p99              : %dms%n", p99);
     return 0;
   }
 
