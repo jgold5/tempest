@@ -5,6 +5,7 @@ hdrhistogram = "2.2.2"
 wiremock = "3.13.2"
 assertj = "3.27.7"
 logback = "1.5.32"
+picocli = "4.7.7"
 
 [libraries]
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
@@ -13,3 +14,4 @@ hdrhistogram = { group = "org.hdrhistogram", name = "HdrHistogram", version.ref 
 wiremock = { group = "org.wiremock", name = "wiremock", version.ref = "wiremock" }
 assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
