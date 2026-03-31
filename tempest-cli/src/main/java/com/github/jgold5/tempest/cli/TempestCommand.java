@@ -37,6 +37,9 @@ public class TempestCommand implements Callable<Integer> {
       required = true)
   private int durationSeconds;
 
+  @Option(names = {"--warmup", "-w"})
+  private int warmupDuration;
+
   @Parameters(index = "0", description = "Target URL")
   private String url;
 
@@ -46,6 +49,7 @@ public class TempestCommand implements Callable<Integer> {
         new LoadTestConfig.Builder()
             .targetRps(targetRps)
             .duration(Duration.ofSeconds(durationSeconds))
+            .warmupDuration(Duration.ofSeconds(warmupDuration))
             .build();
     MetricsRecorder metricsRecorder = new MetricsRecorder();
     LoadGenerator loadGenerator = new LoadGenerator(requestConfig, loadTestConfig, metricsRecorder);
@@ -55,12 +59,12 @@ public class TempestCommand implements Callable<Integer> {
     long p50 = hist.getValueAtPercentile(50.0) / 1_000_000;
     long p95 = hist.getValueAtPercentile(95.0) / 1_000_000;
     long p99 = hist.getValueAtPercentile(99.0) / 1_000_000;
-    long count = metricsRecorder.getSnapshot().getTotalCount();
     System.out.println("\nResults:");
-    System.out.printf("  Total requests : %d%n", snapshot.getTotalCount());
-    System.out.printf("  p50            : %dms%n", p50);
-    System.out.printf("  p95            : %dms%n", p95);
-    System.out.printf("  p99            : %dms%n", p99);
+    System.out.printf("  Total requests   : %d%n", snapshot.getTotalCount());
+    System.out.printf("  Total errors     : %d%n", snapshot.getErrorCount());
+    System.out.printf("  p50              : %dms%n", p50);
+    System.out.printf("  p95              : %dms%n", p95);
+    System.out.printf("  p99              : %dms%n", p99);
     return 0;
   }
 
