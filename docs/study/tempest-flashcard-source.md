@@ -4,8 +4,9 @@ purpose: "Interview prep for the Tempest project bullet on Justin Gold's resume"
 source_repo: "github.com/jgold5/tempest"
 source_ref: "v0.1.0"
 tags: [java-21, virtual-threads, concurrency, rate-limiting, hdrhistogram, load-testing, gradle, picocli, graalvm, adr]
-suggested_card_count: 70
+suggested_card_count: 73
 card_format: "question -> answer, one idea per card"
+card_priority: "[resume] cards first — they are the claims an interviewer can read off the page"
 ---
 
 # Tempest Flashcard Source
@@ -26,6 +27,13 @@ should be answerable in 30-60 seconds out loud.
   in the deck — they are the questions most likely to get asked second.
 - Cards marked `[depth]` are follow-up depth for a strong interviewer; they can
   be split into a second deck if the main deck is meant to stay short.
+
+**Priority: `[resume]` cards come first.** Anything marked `[resume]` states a
+claim that is written on the resume itself. That is the material an interviewer
+can read off the page and ask about cold, and the only material where not having
+an answer actively costs something — the rest of the deck is depth you volunteer,
+but these are questions you have already invited. If the deck gets split, shuffled
+or shortened, `[resume]` cards stay in and go first.
 
 ## The resume bullet, and what it commits to
 
@@ -67,7 +75,7 @@ optional warmup in seconds.
 
 ---
 
-**Q.** What are the modules in the Tempest build, and what does each own?
+**Q.** `[resume]` What are the modules in the Tempest build, and what does each own?
 
 **A.** Two Gradle modules. `tempest-core` owns the load generation engine — the
 load generator, HTTP executor, token bucket, and metrics. `tempest-cli` owns
@@ -111,7 +119,7 @@ read side).
 
 ## Section: virtual-threads
 
-**Q.** How does Tempest get its concurrency?
+**Q.** `[resume]` How does Tempest get its concurrency?
 
 **A.** `Executors.newVirtualThreadPerTaskExecutor()` — one Java 21 virtual thread
 per request, no pooling. The dispatch loop submits a task per token acquired and
@@ -119,7 +127,7 @@ never waits for the response.
 
 ---
 
-**Q.** Why virtual threads instead of a fixed platform thread pool?
+**Q.** `[resume]` Why virtual threads instead of a fixed platform thread pool?
 
 **A.** ADR 001: pool sizing becomes a tuning problem you cannot get right for all
 targets. Too small and requests queue behind the pool instead of going out at the
@@ -146,7 +154,7 @@ carry thousands of in-flight requests.
 
 ---
 
-**Q.** Why virtual threads over a reactive framework for this workload?
+**Q.** `[resume]` Why virtual threads over a reactive framework for this workload?
 
 **A.** ADR 005. Both solve the same problem — do not park a platform thread per
 in-flight request. Virtual threads solve it in the runtime; reactive solves it by
@@ -212,7 +220,7 @@ accepts as the cost of the design. CI builds on Temurin 21.
 
 ## Section: token-bucket
 
-**Q.** What does the token bucket do in Tempest?
+**Q.** `[resume]` What does the token bucket do in Tempest?
 
 **A.** It paces dispatch to the configured target RPS. Tokens accrue over time at
 `targetRps` per second; every request must `acquire()` one token before it is
@@ -237,7 +245,7 @@ leaves nothing running when the tool is idle.
 
 ---
 
-**Q.** Why did Tempest implement its own token bucket instead of using Guava's `RateLimiter`?
+**Q.** `[resume]` Why did Tempest implement its own token bucket instead of using Guava's `RateLimiter`?
 
 **A.** ADR 002: Guava's `RateLimiter` is a black box with no path to the
 optimization the project knows it wants — replacing `synchronized`/`wait` with
@@ -293,12 +301,28 @@ decision.
 
 ## Section: hdrhistogram
 
-**Q.** Why HdrHistogram instead of collecting latencies into a list?
+**Q.** `[resume]` Why HdrHistogram instead of collecting latencies into a list?
 
 **A.** ADR 004: a list of every latency is unbounded memory — at high RPS over a
 long test that is millions of boxed longs and the GC pressure that comes with
 them. HdrHistogram's storage is fixed-size bucketed counts sized by the
 configured value range and precision, not by the number of recorded values.
+
+---
+
+**Q.** `[resume]` The resume says HdrHistogram was picked for its allocation
+behavior and the resulting GC pressure. What does ADR 004 actually argue?
+
+**A.** Three things: memory efficiency (fixed-size bucketed storage sized by range
+and precision, not by request count), accuracy (built for latency, configurable
+significant digits), and concurrency (the `Recorder`/flip pattern takes concurrent
+writes without contention, minimizing allocations). GC pressure is the conclusion
+those lead to rather than a phrase the ADR uses — the alternative, a list holding
+every latency, allocates per request and grows without bound, which is exactly what
+fills a young generation and forces collection during the run you are trying to
+measure. Answer it as a structural argument, and if asked whether you profiled it,
+say plainly that you did not — the decision was made on the allocation shape, not
+on a measurement.
 
 ---
 
@@ -353,7 +377,7 @@ the recorder is destructive on read: the snapshot is the safe, re-queryable copy
 
 ---
 
-**Q.** What are the three latency percentiles Tempest reports, and why percentiles
+**Q.** `[resume]` What are the three latency percentiles Tempest reports, and why percentiles
 rather than an average?
 
 **A.** p50, p95, p99. An average hides the tail — a mean of 5ms is compatible with
@@ -565,7 +589,7 @@ interruption is handled cleanly.
 
 ## Section: cli-and-build
 
-**Q.** What does Picocli give the CLI?
+**Q.** `[resume]` What does Picocli give the CLI?
 
 **A.** Annotation-driven argument parsing — `@Command` on the class, `@Option` for
 `--rps`, `--duration`/`-d` and `--warmup`/`-w`, `@Parameters` for the positional
@@ -574,7 +598,7 @@ implements `Callable<Integer>` so the return value becomes the process exit code
 
 ---
 
-**Q.** How is Tempest distributed?
+**Q.** `[resume]` How is Tempest distributed?
 
 **A.** As a single fat (shadow) jar, built by the GradleUp Shadow plugin in
 `tempest-cli`, with `com.github.jgold5.tempest.cli.TempestCommand` as the main
@@ -583,7 +607,7 @@ drop onto a test box.
 
 ---
 
-**Q.** Why does Tempest ship a fat jar instead of a GraalVM Native Image binary?
+**Q.** `[resume]` Why does Tempest ship a fat jar instead of a GraalVM Native Image binary?
 
 **A.** ADR 006. Picocli resolves `@Command`, `@Option` and `@Parameters`
 reflectively at runtime. Native Image compiles under a closed-world assumption, so
@@ -656,13 +680,24 @@ the platform, so there is no framework to take on.
 
 ## Section: adrs-and-process
 
-**Q.** What is an ADR, and which ones does Tempest have?
+**Q.** `[resume]` What is an ADR, and which ones does Tempest have?
 
 **A.** An Architecture Decision Record — a short document capturing context,
 decision, rationale and consequences at the moment a choice is made, so the
 reasoning survives the commit. Tempest has six: 001 virtual threads, 002 custom
 token bucket, 003 token bucket starts empty, 004 HdrHistogram, 005 virtual threads
 over a reactive framework, 006 fat jar over GraalVM Native Image.
+
+---
+
+**Q.** `[resume]` The resume says four ADRs. What is in the repo now?
+
+**A.** Six. The four at `v0.1.0` were 001 virtual threads, 002 custom token bucket,
+003 token bucket starts empty, and 004 HdrHistogram. ADR 005 (virtual threads over
+a reactive framework) and ADR 006 (fat jar over GraalVM Native Image) were written
+afterwards to record two decisions the original four left undocumented. If the count
+comes up, that is the answer — the number grew because the reasoning got written
+down, not because the project changed.
 
 ---
 
