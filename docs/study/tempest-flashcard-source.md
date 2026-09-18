@@ -3,8 +3,8 @@ deck: "Tempest — Java HTTP Load Testing Tool"
 purpose: "Interview prep for the Tempest project bullet on Justin Gold's resume"
 source_repo: "github.com/jgold5/tempest"
 source_ref: "v0.1.0"
-tags: [java-21, virtual-threads, concurrency, rate-limiting, hdrhistogram, load-testing, gradle, picocli, adr]
-suggested_card_count: 60
+tags: [java-21, virtual-threads, concurrency, rate-limiting, hdrhistogram, load-testing, gradle, picocli, graalvm, adr]
+suggested_card_count: 70
 card_format: "question -> answer, one idea per card"
 ---
 
@@ -42,6 +42,10 @@ should be answerable in 30-60 seconds out loud.
 
 Every noun in that bullet gets at least one card: virtual threads, token bucket,
 HdrHistogram, p50/p95/p99, Picocli, fat jar, multi-module Gradle, ADRs, GraalVM.
+
+Two of those -- the reactive comparison and the Native Image decision -- are now
+recorded in ADR 005 and ADR 006, so the answers below cite the ADRs rather than
+resting on the resume line alone.
 
 ---
 
@@ -144,12 +148,34 @@ carry thousands of in-flight requests.
 
 **Q.** Why virtual threads over a reactive framework for this workload?
 
-**A.** Load generation is throughput-heavy, blocking-I/O-bound code. Virtual
-threads get the same scheduling benefit while the code stays straight-line and
-imperative — you keep `long start = nanoTime(); execute(); long end = nanoTime();`
-instead of threading latency measurement through a callback or operator chain.
-Reactive buys backpressure plumbing this tool does not need, at the cost of
-debuggability and a stack-trace story.
+**A.** ADR 005. Both solve the same problem — do not park a platform thread per
+in-flight request. Virtual threads solve it in the runtime; reactive solves it by
+restructuring the program into operators and callbacks. Tempest's measurement is
+sequential per request, so blocking code keeps the two `System.nanoTime()` calls
+adjacent to the call they measure, instead of carrying that timing through an
+operator chain — which is exactly where latency measurement bugs hide. And it
+avoids a framework dependency: the concurrency comes from the platform.
+
+---
+
+**Q.** Reactive's headline feature is backpressure. Why is that a reason *against*
+it in a load generator?
+
+**A.** ADR 005. Backpressure means a slow consumer slows the producer. In a load
+generator that is the bug, not the feature — it is coordinated omission by
+construction: the tool stops sending precisely when the target is struggling, so
+the worst latencies never get recorded. The token bucket is the only thing allowed
+to govern send rate in Tempest, and nothing downstream is permitted to throttle it.
+
+---
+
+**Q.** `[depth]` What do you give up by choosing virtual threads over reactive here?
+
+**A.** ADR 005. Blocking client libraries become a first-class choice rather than a
+compromise, and `synchronized` turns into a liability rather than a neutral choice,
+since a blocked monitor can pin a carrier thread (ADR 001, ADR 002). The ceiling on
+concurrency becomes carrier threads and sockets rather than the programming model —
+which is a better ceiling to have, but it is still a ceiling.
 
 ---
 
@@ -557,22 +583,46 @@ drop onto a test box.
 
 ---
 
-**Q.** Why was GraalVM Native Image dropped?
+**Q.** Why does Tempest ship a fat jar instead of a GraalVM Native Image binary?
 
-**A.** Picocli resolves its `@Command`/`@Option` annotations reflectively at
-runtime, and that reflection broke ahead-of-time compilation. Making it work
-meant maintaining reflection configuration for the native build. For a tool whose
-startup time is irrelevant next to a 30 second test run, a native binary was not
-worth that carrying cost, so the fat jar stayed.
+**A.** ADR 006. Picocli resolves `@Command`, `@Option` and `@Parameters`
+reflectively at runtime. Native Image compiles under a closed-world assumption, so
+every reflective access has to be registered in reflection metadata at build time
+or the binary fails when it reaches that code. Keeping a native build working means
+generating and maintaining that metadata for every option the CLI grows — and the
+payoff does not apply here.
 
 ---
 
-**Q.** `[depth]` What would it have taken to keep Native Image?
+**Q.** Why doesn't the Native Image payoff apply to Tempest specifically?
 
-**A.** Picocli's `annotation-processor` generates the GraalVM reflection metadata
-at compile time, which is the supported path. The decision was scope, not
-impossibility — the payoff (faster startup, no JVM on the box) did not justify the
-added build complexity at v0.1.0.
+**A.** ADR 006. Native Image buys startup time, and a Tempest run is dominated by
+`--duration` — seconds to minutes. Shaving JVM startup off a 30 second test is not
+worth a second build toolchain. The fat jar already delivers the part that matters:
+one artifact, no install step. And the one thing native image would remove, needing
+a JRE on the box, is not an extra cost — Java 21 is already a hard requirement under
+ADR 001.
+
+---
+
+**Q.** `[depth]` What is the closed-world assumption, and why does reflection
+collide with it?
+
+**A.** Ahead-of-time compilation has to know the whole reachable program at build
+time in order to compile it and discard the rest. Reflection resolves types and
+members by name at runtime, so the compiler cannot see those paths by static
+analysis and prunes them — the binary then fails at the moment it reaches the
+reflective call. That is why native-image builds need explicit reflection metadata
+for anything annotation-driven.
+
+---
+
+**Q.** `[depth]` If you did want Native Image later, where would you start?
+
+**A.** ADR 006 names it: `picocli-codegen`, the annotation processor that generates
+GraalVM reflection metadata at compile time, rather than hand-maintained reflection
+config. The trigger to revisit would be Tempest growing a short-lived mode where
+process startup is a meaningful fraction of total runtime.
 
 ---
 
@@ -606,12 +656,13 @@ the platform, so there is no framework to take on.
 
 ## Section: adrs-and-process
 
-**Q.** What is an ADR, and which four does Tempest have?
+**Q.** What is an ADR, and which ones does Tempest have?
 
 **A.** An Architecture Decision Record — a short document capturing context,
 decision, rationale and consequences at the moment a choice is made, so the
-reasoning survives the commit. Tempest has four: 001 virtual threads, 002 custom
-token bucket, 003 token bucket starts empty, 004 HdrHistogram.
+reasoning survives the commit. Tempest has six: 001 virtual threads, 002 custom
+token bucket, 003 token bucket starts empty, 004 HdrHistogram, 005 virtual threads
+over a reactive framework, 006 fat jar over GraalVM Native Image.
 
 ---
 
